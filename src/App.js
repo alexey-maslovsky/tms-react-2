@@ -1,18 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ButtonLink from './components/ButtonLink/ButtonLink';
 import Profile from './components/Profile/Profile';
 import ProfileForm from './components/ProfileForm/ProfileForm';
-
-const TEST_DATA = {
-  firstName: 'Alex',
-  lastName: 'Maslovsky',
-  photoSrc: 'https://cdn.mos.cms.futurecdn.net/VSy6kJDNq2pSXsCzb6cvYF.jpg',
-  hobbies: [
-    { id: '1', name: 'guitar' },
-    { id: '2', name: 'nature' },
-    { id: '3', name: 'gaming' },
-  ],
-};
+import { Hearts } from  'react-loader-spinner';
+import getProfile from './api/getProfile';
+import updateProfile from './api/updateProfile';
 
 const UserProfileContainerStyles = {
   display: 'flex',
@@ -20,26 +12,44 @@ const UserProfileContainerStyles = {
 
 const App = () => {
   const [isEdit, setIsEdit] = useState(false);
+  const [data, setData] = useState(null);
 
   const handleEdit = () => {
     setIsEdit(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async (newProfileData) => {
+    const updatedData = await updateProfile(newProfileData);
+
+    setData(updatedData);
+
     setIsEdit(false);
   };
+
+  const fetchProfileData = async () => {
+    const newData = await getProfile();
+
+    setData(newData);
+  };
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
 
   return (
     <div>
       <div style={UserProfileContainerStyles}>
         User Profile{' '}
-        <ButtonLink onClick={isEdit ? handleSave : handleEdit}>
-          {isEdit ? 'Save' : 'Edit'}
-        </ButtonLink>
+        {!isEdit && data && (
+          <ButtonLink onClick={handleEdit}>
+            Edit
+          </ButtonLink>
+        )}
       </div>
 
-      {!isEdit && <Profile user={TEST_DATA} />}
-      {isEdit && <ProfileForm user={TEST_DATA} />}
+      {!data && <Hearts />}
+      {!isEdit && data && <Profile user={data} />}
+      {isEdit && data && <ProfileForm user={data} onSave={handleSave} />}
     </div>
   );
 };
